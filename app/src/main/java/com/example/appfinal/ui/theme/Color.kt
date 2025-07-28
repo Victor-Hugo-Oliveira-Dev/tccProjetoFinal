@@ -15,3 +15,7 @@ val CorRotuloCaixaDeTexto = Color(0xFFC70000)
 
 val Blue = Color(0xFF3F51B5)
 val cinza = Color(0xFF414141)
+
+val fundo = Color(0xfff2ede3)
+val botao = Color(0xff1b2e3a)
+

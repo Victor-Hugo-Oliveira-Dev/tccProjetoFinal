@@ -1,5 +1,7 @@
 package com.example.appfinal.Interfaces
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -17,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.appfinal.Componente.CaixaDeTexto
 import com.example.appfinal.R
+import com.example.appfinal.ui.theme.fundo
 
 @Composable
 fun TelaLogin(navController: NavController, modifier: Modifier = Modifier) {
@@ -24,14 +27,26 @@ fun TelaLogin(navController: NavController, modifier: Modifier = Modifier) {
     var senha by remember { mutableStateOf("") }
     var mostrarSenha by remember { mutableStateOf(false) }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(modifier = Modifier.fillMaxSize())
+    {
         Column(
             modifier = modifier
+                .background(color = fundo)
                 .fillMaxSize()
                 .padding(32.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        ){
+
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = "Logo GrafVar",
+
+
+                )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             CaixaDeTexto(
                 value = email,
                 onValueChange = { email = it },
@@ -68,9 +83,9 @@ fun TelaLogin(navController: NavController, modifier: Modifier = Modifier) {
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Black,
+                    containerColor = Color(0xff1b2e3a),
                     contentColor = Color.White
-            )
+                )
             ) {
                 Text("Entrar")
             }

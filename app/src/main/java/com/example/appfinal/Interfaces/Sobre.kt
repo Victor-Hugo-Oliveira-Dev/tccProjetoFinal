@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material3.BottomAppBar
@@ -41,9 +42,9 @@ fun Sobre(navController: NavController) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Grafvar") },
+                title = { Text("Sobre") },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Black,
+                    containerColor = Color(0xff1b2e3a),
                     titleContentColor = Color.White
                 )
             )
@@ -51,12 +52,26 @@ fun Sobre(navController: NavController) {
         bottomBar = {
             BottomAppBar(
                 contentColor = Color.White,
-                containerColor = Color.Black
+                containerColor = Color(0xff1b2e3a)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
                 ) {
+                    SmallFloatingActionButton(
+                        onClick = { navController.navigate("TelaPrincipal") },
+                        modifier = Modifier.size(50.dp),
+                        containerColor = Color.White,
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Home,
+                            contentDescription = "Ínicio",
+                            tint = Color(0xff1b2e3a),
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+
                     SmallFloatingActionButton(
                         onClick = { navController.navigate("Dados") },
                         modifier = Modifier.size(50.dp),
@@ -66,7 +81,7 @@ fun Sobre(navController: NavController) {
                         Icon(
                             imageVector = Icons.Rounded.Menu,
                             contentDescription = "Dados",
-                            tint = Color.Black,
+                            tint = Color(0xff1b2e3a),
                         )
                     }
 
@@ -81,7 +96,7 @@ fun Sobre(navController: NavController) {
                         Icon(
                             imageVector = Icons.Rounded.Info,
                             contentDescription = "Sobre",
-                            tint = Color.Black,
+                            tint = Color(0xff1b2e3a),
                         )
                     }
                 }
@@ -109,16 +124,16 @@ fun Sobre(navController: NavController) {
                             modifier = Modifier.align(Alignment.CenterHorizontally),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.Black
+                            color = Color(0xff1b2e3a)
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Olá, sou Victor. Este projeto tem como objetivo auxiliar traders e investidores em seu dia a dia.\n" +
+                            text = "Olá, sou Victor. Este projeto tem como objetivo auxiliar traders e investidores em seu dia a dia.\n\n" +
                                     "Por lidar com um grande volume de dados, ele busca, junto a outras ferramentas, aumentar a taxa de operações bem-sucedidas,\n" +
                                     "informando — com base em dados internos — a probabilidade de ganho (gain) ou perda (loss),\n" +
                                     "a partir da análise dos padrões dos 10 últimos CandleSticks do gráfico.\n\n" +
                                     "Projeto desenvolvido para a conclusão do curso de Análise e Desenvolvimento de Sistemas,\n" +
-                                    "utilizando ferramentas como Android Studio e linguagens como Kotlin, Python e PostgreSQL.",
+                                    "utilizando ferramentas como Android Studio e linguagens como Kotlin e Python.",
                             fontSize = 16.sp,
                             color = Color.DarkGray
                         )

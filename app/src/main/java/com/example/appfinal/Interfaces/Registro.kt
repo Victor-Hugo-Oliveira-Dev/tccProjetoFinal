@@ -1,6 +1,6 @@
 package com.example.appfinal.Interfaces
 
-import android.R.attr.text
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,9 +16,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,6 +31,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.appfinal.Componente.CaixaDeTexto
+import com.example.appfinal.ui.theme.fundo
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,7 +50,7 @@ fun Registro(navController: NavController, modifier: Modifier = Modifier) {
             CenterAlignedTopAppBar(
                 title = { Text("Cadastro") },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Black,
+                    containerColor = Color(0xff1b2e3a),
                     titleContentColor = Color.White
                 )
             )
@@ -60,6 +59,7 @@ fun Registro(navController: NavController, modifier: Modifier = Modifier) {
         content = { paddingValues ->
             Column(
                 modifier = modifier
+                    .background(color = fundo)
                     .fillMaxSize()
                     .padding(paddingValues)
                     .padding(32.dp),
@@ -128,7 +128,7 @@ fun Registro(navController: NavController, modifier: Modifier = Modifier) {
                     },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Black,
+                        containerColor = Color(0xff1b2e3a),
                         contentColor = Color.White
                     )
                 ) {
