@@ -2,8 +2,11 @@ package com.example.appfinal.Interfaces
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
+import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -12,7 +15,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Menu
@@ -30,18 +32,44 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.appfinal.R
 import com.example.appfinal.ui.theme.fundo
+import com.example.appfinal.ML.MLResult
+import com.example.appfinal.components.ResultPopup
+import com.example.appfinal.components.LoadingPopup
+import com.example.appfinal.components.ErrorPopup
+import com.example.appfinal.DataClass.Historico
+import com.example.appfinal.FireBase.SimpleFirebaseService
+import com.example.appfinal.ML.SimplifiedMLAnalyzer
+import kotlinx.coroutines.launch
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TelaPrincipal(navController: NavController) {
+fun TelaPrincipal(
+    navController: NavController,
+    onAddHistorico: (Historico) -> Unit = {}
+) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
+    // Serviços ML e Firebase
+    val mlAnalyzer = remember { SimplifiedMLAnalyzer(context) }
+    val firebaseService = remember { SimpleFirebaseService() }
+
+    // Estados da UI
     var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
     var galleryImageUri by remember { mutableStateOf<Uri?>(null) }
     var showImagePreview by remember { mutableStateOf(false) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedBitmap by remember { mutableStateOf<Bitmap?>(null) }
 
+    // Estados para popups
+    var showLoadingPopup by remember { mutableStateOf(false) }
+    var showResultPopup by remember { mutableStateOf(false) }
+    var showErrorPopup by remember { mutableStateOf(false) }
+    var analysisResult by remember { mutableStateOf<MLResult?>(null) }
+    var errorMessage by remember { mutableStateOf("") }
+
+    // Launchers para câmera e galeria
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
@@ -88,6 +116,7 @@ fun TelaPrincipal(navController: NavController) {
         }
     }
 
+    // Função para verificar permissão e abrir galeria
     fun checkStoragePermissionAndOpenGallery() {
         val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             Manifest.permission.READ_MEDIA_IMAGES
@@ -101,6 +130,59 @@ fun TelaPrincipal(navController: NavController) {
             }
             else -> {
                 storagePermissionLauncher.launch(permission)
+            }
+        }
+    }
+
+    // Função para converter URI para Bitmap
+    fun uriToBitmap(uri: Uri): Bitmap? {
+        return try {
+            if (Build.VERSION.SDK_INT < 28) {
+                @Suppress("DEPRECATION")
+                MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+            } else {
+                val source = ImageDecoder.createSource(context.contentResolver, uri)
+                ImageDecoder.decodeBitmap(source)
+            }
+        } catch (e: Exception) {
+            Log.e("TelaPrincipal", "Erro ao converter URI para Bitmap", e)
+            null
+        }
+    }
+
+    // Função para analisar imagem com ML local
+    fun analyzeImage(bitmap: Bitmap) {
+        scope.launch {
+            try {
+                showLoadingPopup = true
+
+                // Inicializa o ML se necessário
+                Log.d("TelaPrincipal", "Inicializando ML Analyzer...")
+                if (!mlAnalyzer.initialize()) {
+                    throw Exception("Erro ao inicializar o analisador ML")
+                }
+
+                // Analisa a imagem localmente
+                Log.d("TelaPrincipal", "Analisando imagem...")
+                val result = mlAnalyzer.analyzeImage(bitmap)
+
+                showLoadingPopup = false
+
+                if (result.success) {
+                    Log.d("TelaPrincipal", "✅ Análise bem-sucedida: ${result.tendencia}")
+                    analysisResult = result
+                    showResultPopup = true
+                } else {
+                    Log.e("TelaPrincipal", "❌ Erro na análise: ${result.error}")
+                    errorMessage = result.error
+                    showErrorPopup = true
+                }
+
+            } catch (e: Exception) {
+                showLoadingPopup = false
+                errorMessage = e.message ?: "Erro desconhecido durante a análise"
+                showErrorPopup = true
+                Log.e("TelaPrincipal", "❌ Erro na análise", e)
             }
         }
     }
@@ -245,7 +327,9 @@ fun TelaPrincipal(navController: NavController) {
                             }
                         }
                     )
+                }
 
+                // Preview da imagem selecionada
                 if (showImagePreview && selectedImageUri != null) {
                     Box(
                         modifier = Modifier
@@ -291,24 +375,77 @@ fun TelaPrincipal(navController: NavController) {
 
                                     Button(
                                         onClick = {
-                                            // Lógica para enviar a imagem
-                                            Log.d("Upload", "Enviando imagem: $selectedImageUri")
-                                            showImagePreview = false
+                                            selectedImageUri?.let { uri ->
+                                                val bitmap = uriToBitmap(uri)
+                                                if (bitmap != null) {
+                                                    selectedBitmap = bitmap
+                                                    showImagePreview = false
+                                                    analyzeImage(bitmap)
+                                                } else {
+                                                    errorMessage = "Erro ao processar a imagem selecionada"
+                                                    showErrorPopup = true
+                                                    showImagePreview = false
+                                                }
+                                            }
                                         },
                                         modifier = Modifier.weight(1f),
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = Color(0xff1b2e3a)
                                         )
                                     ) {
-                                        Text("Enviar", color = Color.White)
+                                        Text("Analisar", color = Color.White)
                                     }
                                 }
                             }
                         }
                     }
                 }
+
+                // Popups
+                if (showLoadingPopup) {
+                    LoadingPopup(onDismiss = { })
+                }
+
+                if (showResultPopup && analysisResult != null) {
+                    ResultPopup(
+                        result = analysisResult!!,
+                        onDismiss = { showResultPopup = false },
+                        onSaveToHistory = {
+                            analysisResult?.let { result ->
+                                scope.launch {
+                                    val novoHistorico = Historico(
+                                        data = result.dataAnalise,
+                                        hora = result.horaAnalise,
+                                        status = result.status,
+                                        similaridadePorcentagem = result.similaridadePorcentagem,
+                                        descricaoPadrao = result.descricaoPadrao,
+                                        imagemSimilar = "local_analysis",
+                                        distanciaEuclidiana = result.distanciaEuclidiana
+                                    )
+
+                                    // Adiciona no estado local
+                                    onAddHistorico(novoHistorico)
+
+                                    // Salva no Firebase (opcional, não bloqueia a UI)
+                                    try {
+                                        firebaseService.saveHistorico(novoHistorico)
+                                        Log.d("TelaPrincipal", "✅ Histórico salvo no Firebase")
+                                    } catch (e: Exception) {
+                                        Log.w("TelaPrincipal", "⚠️ Erro ao salvar no Firebase (continuando...)", e)
+                                    }
+                                }
+                            }
+                        }
+                    )
+                }
+
+                if (showErrorPopup) {
+                    ErrorPopup(
+                        errorMessage = errorMessage,
+                        onDismiss = { showErrorPopup = false }
+                    )
+                }
             }
         }
-    }
     )
 }
