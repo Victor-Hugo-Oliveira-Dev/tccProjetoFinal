@@ -2,26 +2,9 @@ package com.example.appfinal.Interfaces
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,18 +15,19 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.appfinal.Componente.CaixaDeTexto
 import com.example.appfinal.ui.theme.fundo
+import com.example.appfinal.FireBase.SimpleFirebaseService
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Registro(navController: NavController, modifier: Modifier = Modifier) {
-    var ID by remember {mutableStateOf("")}
     var nomeUsuario by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var senha by remember { mutableStateOf("") }
     var confirmarSenha by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
-    val snackbarHostState = remember { androidx.compose.material3.SnackbarHostState() }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
         topBar = {
@@ -55,7 +39,7 @@ fun Registro(navController: NavController, modifier: Modifier = Modifier) {
                 )
             )
         },
-        snackbarHost = { androidx.compose.material3.SnackbarHost(hostState = snackbarHostState) },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         content = { paddingValues ->
             Column(
                 modifier = modifier
@@ -66,6 +50,11 @@ fun Registro(navController: NavController, modifier: Modifier = Modifier) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                if (isLoading) {
+                    CircularProgressIndicator(color = Color(0xff1b2e3a))
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
                 CaixaDeTexto(
                     value = nomeUsuario,
                     onValueChange = { nomeUsuario = it },
@@ -114,15 +103,31 @@ fun Registro(navController: NavController, modifier: Modifier = Modifier) {
                                     snackbarHostState.showSnackbar("Preencha todos os campos.")
                                 }
                             }
-
                             senha != confirmarSenha -> {
                                 coroutineScope.launch {
                                     snackbarHostState.showSnackbar("As senhas não coincidem.")
                                 }
                             }
-
+                            senha.length < 6 -> {
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar("A senha deve ter pelo menos 6 caracteres.")
+                                }
+                            }
                             else -> {
-                                navController.navigate("TelaPrincipal")
+                                isLoading = true
+                                coroutineScope.launch {
+                                    val firebaseService = SimpleFirebaseService()
+                                    val result = firebaseService.registerUser(email, senha, nomeUsuario)
+                                    if (result.isSuccess) {
+                                        snackbarHostState.showSnackbar("Cadastro realizado com sucesso!")
+                                        navController.navigate("TelaPrincipal") {
+                                            popUpTo("Registro") { inclusive = true }
+                                        }
+                                    } else {
+                                        snackbarHostState.showSnackbar("Erro: ${result.exceptionOrNull()?.message}")
+                                    }
+                                    isLoading = false
+                                }
                             }
                         }
                     },
@@ -130,9 +135,10 @@ fun Registro(navController: NavController, modifier: Modifier = Modifier) {
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xff1b2e3a),
                         contentColor = Color.White
-                    )
+                    ),
+                    enabled = !isLoading
                 ) {
-                    Text("Cadastrar")
+                    Text(if (isLoading) "Cadastrando..." else "Cadastrar")
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -140,10 +146,9 @@ fun Registro(navController: NavController, modifier: Modifier = Modifier) {
                 Text(
                     text = "Já possuo cadastro",
                     color = Color.Black,
-                    modifier = Modifier
-                        .clickable {
-                            navController.navigate("TelaLogin")
-                        },
+                    modifier = Modifier.clickable {
+                        navController.navigate("TelaLogin")
+                    },
                     textDecoration = TextDecoration.Underline
                 )
             }

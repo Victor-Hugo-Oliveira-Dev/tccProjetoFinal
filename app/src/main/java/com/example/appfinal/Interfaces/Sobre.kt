@@ -128,12 +128,10 @@ fun Sobre(navController: NavController) {
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Olá, sou Victor. Este projeto tem como objetivo auxiliar traders e investidores em seu dia a dia.\n\n" +
-                                    "Por lidar com um grande volume de dados, ele busca, junto a outras ferramentas, aumentar a taxa de operações bem-sucedidas,\n" +
-                                    "informando — com base em dados internos — a probabilidade de ganho (gain) ou perda (loss),\n" +
-                                    "a partir da análise dos padrões dos 10 últimos CandleSticks do gráfico.\n\n" +
-                                    "Projeto desenvolvido para a conclusão do curso de Análise e Desenvolvimento de Sistemas,\n" +
-                                    "utilizando ferramentas como Android Studio e linguagens como Kotlin e Python.",
+                            text = "O presente trabalho tem como objetivo desenvolver uma solução voltada ao apoio de traders e investidores em suas atividades diárias. \n\n" +
+                                    "Considerando o elevado volume de informações envolvidas nesse contexto, o sistema proposto integra-se a ferramentas complementares com a finalidade de aumentar a taxa de operações bem-sucedidas. Para tanto, realiza o cálculo da probabilidade de ganho (gain) ou perda (loss) a partir da análise dos padrões identificados nos dez últimos candlesticks de um gráfico.\n\n" +
+                                    "Este projeto foi elaborado como requisito parcial para a conclusão do curso de Análise e Desenvolvimento de Sistemas, utilizando o ambiente de desenvolvimento Android Studio e linguagens de programação como Kotlin e Python.\n\n" +
+                                    "Para melhor análise, sempre escolha tirar fotos dos 10 ultimos CandleSticks.",
                             fontSize = 16.sp,
                             color = Color.DarkGray
                         )

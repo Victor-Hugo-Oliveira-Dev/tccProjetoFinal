@@ -16,26 +16,39 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.appfinal.DataClass.Historico
+import com.example.appfinal.FireBase.SimpleFirebaseService
 import com.example.appfinal.ui.theme.fundo
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Dados(navController: NavController) {
-    var historico by remember {
-        mutableStateOf(
-            listOf(
-                Historico("2025-07-17", "14:30", true),
-                Historico("2025-07-17", "14:00", false),
-                Historico("2025-07-16", "09:15", true),
-                Historico("2025-07-15", "18:42", false),
-                Historico("2025-07-14", "12:05", true)
-            )
-        )
+    val firebaseService = remember { SimpleFirebaseService() }
+    val scope = rememberCoroutineScope()
+    var historico by remember { mutableStateOf<List<Historico>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Carregar dados do Firebase quando a tela for exibida
+    LaunchedEffect(Unit) {
+        scope.launch {
+            isLoading = true
+            val result = firebaseService.getHistoricos()
+            if (result.isSuccess) {
+                historico = result.getOrNull() ?: emptyList()
+                errorMessage = null
+            } else {
+                errorMessage = "Erro ao carregar histórico: ${result.exceptionOrNull()?.message}"
+                historico = emptyList()
+            }
+            isLoading = false
+        }
     }
 
     Scaffold(
@@ -46,13 +59,99 @@ fun Dados(navController: NavController) {
             BarraInferiorNavegacao(navController)
         }
     ) { paddingValues ->
-        ListaHistorico(
-            historico = historico,
-            onRemoverItem = { item ->
-                historico = historico.filterNot { it == item }
-            },
-            modifier = Modifier.padding(paddingValues)
-        )
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(fundo)
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = Color(0xff1b2e3a))
+            }
+        } else if (errorMessage != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(fundo)
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "❌",
+                        fontSize = 48.sp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = errorMessage ?: "Erro desconhecido",
+                        color = Color.Red,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                isLoading = true
+                                val result = firebaseService.getHistoricos()
+                                if (result.isSuccess) {
+                                    historico = result.getOrNull() ?: emptyList()
+                                    errorMessage = null
+                                } else {
+                                    errorMessage = "Erro ao recarregar: ${result.exceptionOrNull()?.message}"
+                                }
+                                isLoading = false
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xff1b2e3a))
+                    ) {
+                        Text("Tentar Novamente", color = Color.White)
+                    }
+                }
+            }
+        } else if (historico.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(fundo)
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "📊",
+                        fontSize = 48.sp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Nenhum histórico encontrado",
+                        color = Color.Gray,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = "Realize análises para ver o histórico aqui",
+                        color = Color.Gray,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        } else {
+            ListaHistorico(
+                historico = historico,
+                onRemoverItem = { item ->
+                    scope.launch {
+                        val result = firebaseService.deleteHistorico(item)
+                        if (result.isSuccess) {
+                            // Atualiza a lista localmente após exclusão bem-sucedida
+                            historico = historico.filterNot { it == item }
+                        } else {
+                            errorMessage = "Erro ao excluir: ${result.exceptionOrNull()?.message}"
+                        }
+                    }
+                },
+                modifier = Modifier.padding(paddingValues)
+            )
+        }
     }
 }
 
@@ -144,7 +243,7 @@ private fun ListaHistorico(
     ) {
         items(
             items = historico,
-            key = { item -> item.data + item.hora }
+            key = { item -> "${item.data}_${item.hora}_${item.similaridadePorcentagem}" }
         ) { item ->
             ItemHistorico(
                 item = item,
@@ -180,9 +279,9 @@ private fun ItemHistorico(item: Historico, onRemover: () -> Unit) {
                     modifier = Modifier.padding(end = 12.dp)
                 )
 
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Data: ${item.data} | Hora: ${item.hora}",
+                        text = "${item.data} | ${item.hora}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color(0xFF333333)
                     )
@@ -191,6 +290,21 @@ private fun ItemHistorico(item: Historico, onRemover: () -> Unit) {
                         fontSize = 14.sp,
                         color = if (item.status) Color(0xFF4CAF50) else Color(0xFFF44336)
                     )
+                    if (item.similaridadePorcentagem > 0) {
+                        Text(
+                            text = "Similaridade: ${String.format("%.1f", item.similaridadePorcentagem)}%",
+                            fontSize = 12.sp,
+                            color = Color(0xFF666666)
+                        )
+                    }
+                    if (item.descricaoPadrao.isNotEmpty()) {
+                        Text(
+                            text = item.descricaoPadrao,
+                            fontSize = 12.sp,
+                            color = Color(0xFF666666),
+                            maxLines = 1
+                        )
+                    }
                 }
             }
 
