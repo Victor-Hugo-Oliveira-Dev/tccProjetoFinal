@@ -3,15 +3,18 @@ package com.example.appfinal.Interfaces
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.appfinal.Componente.CaixaDeTexto
 import com.example.appfinal.ui.theme.fundo
@@ -119,12 +122,18 @@ fun Registro(navController: NavController, modifier: Modifier = Modifier) {
                                     val firebaseService = SimpleFirebaseService()
                                     val result = firebaseService.registerUser(email, senha, nomeUsuario)
                                     if (result.isSuccess) {
-                                        snackbarHostState.showSnackbar("Cadastro realizado com sucesso!")
-                                        navController.navigate("TelaPrincipal") {
+                                        // ✅ MUDANÇA: Agora vai para tela de login em vez de TelaPrincipal
+                                        snackbarHostState.showSnackbar("Cadastro realizado! Faça login para continuar.")
+
+                                        // Aguarda um pouco para mostrar a mensagem antes de navegar
+                                        kotlinx.coroutines.delay(1000)
+
+                                        navController.navigate("TelaLogin") {
                                             popUpTo("Registro") { inclusive = true }
                                         }
                                     } else {
-                                        snackbarHostState.showSnackbar("Erro: ${result.exceptionOrNull()?.message}")
+                                        val errorMsg = result.exceptionOrNull()?.message ?: "Erro desconhecido"
+                                        snackbarHostState.showSnackbar("Erro: $errorMsg")
                                     }
                                     isLoading = false
                                 }
@@ -136,9 +145,13 @@ fun Registro(navController: NavController, modifier: Modifier = Modifier) {
                         containerColor = Color(0xff1b2e3a),
                         contentColor = Color.White
                     ),
+                    shape = RoundedCornerShape(8.dp),
                     enabled = !isLoading
                 ) {
-                    Text(if (isLoading) "Cadastrando..." else "Cadastrar")
+                    Text(if (isLoading) "Cadastrando..." else "Cadastrar",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))

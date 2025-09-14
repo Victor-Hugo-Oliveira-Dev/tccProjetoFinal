@@ -1,9 +1,10 @@
 package com.example.appfinal.FireBase
 
-import android.hardware.usb.UsbDevice.getDeviceId
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.example.appfinal.DataClass.Historico
 import kotlinx.coroutines.tasks.await
 import android.util.Log
@@ -23,7 +24,50 @@ class SimpleFirebaseService {
         return currentUser.uid
     }
 
-    // Função para registrar novo usuário
+    // ✅ NOVO: Verifica se o usuário já está logado (login persistente)
+    fun checkUserLoggedIn(): Boolean {
+        val currentUser = auth.currentUser
+        val isLoggedIn = currentUser != null
+        Log.d("SimpleFirebase", "✅ Verificação de login: $isLoggedIn")
+        return isLoggedIn
+    }
+
+    // ✅ NOVO: Login com Google
+    suspend fun signInWithGoogle(account: GoogleSignInAccount): Result<Boolean> {
+        return try {
+            val credential = GoogleAuthProvider.getCredential(account.idToken, null)
+            val authResult = auth.signInWithCredential(credential).await()
+
+            // Verifica se é um novo usuário e cria documento no Firestore
+            val user = authResult.user!!
+            val isNewUser = authResult.additionalUserInfo?.isNewUser ?: false
+
+            if (isNewUser) {
+                val userData = mapOf(
+                    "username" to (user.displayName ?: "Usuário Google"),
+                    "email" to (user.email ?: ""),
+                    "provider" to "google",
+                    "createdAt" to System.currentTimeMillis()
+                )
+
+                firestore.collection("users")
+                    .document(user.uid)
+                    .set(userData)
+                    .await()
+
+                Log.d("SimpleFirebase", "✅ Novo usuário Google registrado: ${user.email}")
+            } else {
+                Log.d("SimpleFirebase", "✅ Usuário Google existente logado: ${user.email}")
+            }
+
+            Result.success(true)
+        } catch (e: Exception) {
+            Log.e("SimpleFirebase", "❌ Erro no login com Google", e)
+            Result.failure(e)
+        }
+    }
+
+    // Função para registrar novo usuário - MODIFICADA para NÃO fazer login automático
     suspend fun registerUser(email: String, password: String, username: String): Result<Boolean> {
         return try {
             // Cria o usuário no Authentication
@@ -40,6 +84,7 @@ class SimpleFirebaseService {
             val userData = mapOf(
                 "username" to username,
                 "email" to email,
+                "provider" to "email",
                 "createdAt" to System.currentTimeMillis()
             )
 
@@ -48,7 +93,10 @@ class SimpleFirebaseService {
                 .set(userData)
                 .await()
 
-            Log.d("SimpleFirebase", "✅ Usuário registrado: $email")
+            // ✅ IMPORTANTE: Faz logout após registrar para forçar login manual
+            auth.signOut()
+
+            Log.d("SimpleFirebase", "✅ Usuário registrado (sem login automático): $email")
             Result.success(true)
         } catch (e: Exception) {
             Log.e("SimpleFirebase", "❌ Erro ao registrar usuário", e)
@@ -82,6 +130,11 @@ class SimpleFirebaseService {
     // Obtém nome do usuário logado
     fun getCurrentUsername(): String {
         return auth.currentUser?.displayName ?: "Usuário"
+    }
+
+    // ✅ NOVO: Obtém email do usuário logado
+    fun getCurrentUserEmail(): String {
+        return auth.currentUser?.email ?: ""
     }
 
     suspend fun saveHistorico(historico: Historico): Result<String> {

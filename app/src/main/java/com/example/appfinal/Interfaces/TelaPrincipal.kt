@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
@@ -54,6 +55,9 @@ fun TelaPrincipal(
     // Serviços ML e Firebase
     val mlAnalyzer = remember { SimplifiedMLAnalyzer(context) }
     val firebaseService = remember { SimpleFirebaseService() }
+
+    // Estado para o dialog de logout
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
     // Estados da UI
     var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
@@ -191,6 +195,18 @@ fun TelaPrincipal(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Grafvar") },
+                actions = {
+                    // ✅ Botão de Logout no canto superior direito
+                    IconButton(
+                        onClick = { showLogoutDialog = true }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_logout_24),
+                            contentDescription = "Sair",
+                            tint = Color.White
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = Color(0xff1b2e3a),
                     titleContentColor = Color.White
@@ -448,4 +464,44 @@ fun TelaPrincipal(
             }
         }
     )
+
+    // ✅ Dialog de confirmação de logout
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = {
+                Text(
+                    text = "Sair do aplicativo",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text("Tem certeza que deseja sair da sua conta?")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            firebaseService.logoutUser()
+                            showLogoutDialog = false
+                            navController.navigate("TelaLogin") {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFF44336)
+                    )
+                ) {
+                    Text("Sair", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancelar", color = Color(0xff1b2e3a))
+                }
+            },
+            containerColor = Color.White
+        )
+    }
 }

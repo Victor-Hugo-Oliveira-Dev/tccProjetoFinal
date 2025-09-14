@@ -272,7 +272,9 @@ private fun ItemHistorico(item: Historico, onRemover: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f),
+            ) {
                 Text(
                     text = if (item.status) "📈" else "📉",
                     fontSize = 32.sp,

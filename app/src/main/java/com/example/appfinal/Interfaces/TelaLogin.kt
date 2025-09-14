@@ -4,22 +4,32 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.appfinal.Componente.CaixaDeTexto
 import com.example.appfinal.R
 import com.example.appfinal.ui.theme.fundo
 import com.example.appfinal.FireBase.SimpleFirebaseService
-import androidx.compose.ui.res.painterResource
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.util.Log
 import kotlinx.coroutines.launch
 
 @Composable
@@ -30,6 +40,46 @@ fun TelaLogin(navController: NavController, modifier: Modifier = Modifier) {
     var isLoading by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val firebaseService = remember { SimpleFirebaseService() }
+
+    // ✅ Configuração do Google Sign-In
+    val gso = remember {
+        GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken("YOUR_WEB_CLIENT_ID_HERE") // ⚠️ SUBSTITUA pelo seu Web Client ID do Firebase
+            .requestEmail()
+            .build()
+    }
+
+    val googleSignInClient = remember { GoogleSignIn.getClient(context, gso) }
+
+    // Launcher para resultado do Google Sign-In
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        try {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            val account = task.getResult(ApiException::class.java)
+
+            coroutineScope.launch {
+                isLoading = true
+                val loginResult = firebaseService.signInWithGoogle(account)
+                if (loginResult.isSuccess) {
+                    navController.navigate("TelaPrincipal") {
+                        popUpTo("TelaLogin") { inclusive = true }
+                    }
+                } else {
+                    snackbarHostState.showSnackbar("Erro no login com Google: ${loginResult.exceptionOrNull()?.message}")
+                }
+                isLoading = false
+            }
+        } catch (e: ApiException) {
+            Log.e("GoogleSignIn", "Erro no Google Sign-In", e)
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar("Erro no login com Google")
+            }
+        }
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
@@ -90,6 +140,7 @@ fun TelaLogin(navController: NavController, modifier: Modifier = Modifier) {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                // ✅ Botão de Login por E-mail
                 Button(
                     onClick = {
                         if (email.isBlank() || senha.isBlank()) {
@@ -99,7 +150,6 @@ fun TelaLogin(navController: NavController, modifier: Modifier = Modifier) {
                         } else {
                             isLoading = true
                             coroutineScope.launch {
-                                val firebaseService = SimpleFirebaseService()
                                 val result = firebaseService.loginUser(email, senha)
                                 if (result.isSuccess) {
                                     navController.navigate("TelaPrincipal") {
@@ -117,9 +167,59 @@ fun TelaLogin(navController: NavController, modifier: Modifier = Modifier) {
                         containerColor = Color(0xff1b2e3a),
                         contentColor = Color.White
                     ),
+                    shape = RoundedCornerShape(8.dp),
                     enabled = !isLoading
                 ) {
-                    Text(if (isLoading) "Entrando..." else "Entrar")
+                    Text(if (isLoading) "Entrando..." else "Entrar",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // ✅ Botão de Login com Google
+                OutlinedButton(
+                    onClick = {
+                        if (!isLoading) {
+                            val signInIntent = googleSignInClient.signInIntent
+                            googleSignInLauncher.launch(signInIntent)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xff1b2e3a),
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    enabled = !isLoading
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Entrar com Google",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Divisor
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Divider(modifier = Modifier.weight(1f))
+                    Text(
+                        text = " ou ",
+                        color = Color.Gray,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                    Divider(modifier = Modifier.weight(1f))
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))
