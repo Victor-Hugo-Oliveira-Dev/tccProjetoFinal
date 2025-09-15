@@ -196,7 +196,7 @@ fun TelaPrincipal(
             CenterAlignedTopAppBar(
                 title = { Text("Grafvar") },
                 actions = {
-                    // ✅ Botão de Logout no canto superior direito
+                    // Botão de Logout no canto superior direito
                     IconButton(
                         onClick = { showLogoutDialog = true }
                     ) {
@@ -442,12 +442,12 @@ fun TelaPrincipal(
                                     // Adiciona no estado local
                                     onAddHistorico(novoHistorico)
 
-                                    // Salva no Firebase (opcional, não bloqueia a UI)
+                                    // Salva no Firebase
                                     try {
                                         firebaseService.saveHistorico(novoHistorico)
-                                        Log.d("TelaPrincipal", "✅ Histórico salvo no Firebase")
+                                        Log.d("TelaPrincipal", "Histórico salvo")
                                     } catch (e: Exception) {
-                                        Log.w("TelaPrincipal", "⚠️ Erro ao salvar no Firebase (continuando...)", e)
+                                        Log.w("TelaPrincipal", "Erro ao salvar (continuando...)", e)
                                     }
                                 }
                             }
@@ -465,7 +465,7 @@ fun TelaPrincipal(
         }
     )
 
-    // ✅ Dialog de confirmação de logout
+    // Dialog de confirmação de logout
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
