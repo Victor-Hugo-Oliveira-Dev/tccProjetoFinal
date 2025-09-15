@@ -122,12 +122,8 @@ fun Registro(navController: NavController, modifier: Modifier = Modifier) {
                                     val firebaseService = SimpleFirebaseService()
                                     val result = firebaseService.registerUser(email, senha, nomeUsuario)
                                     if (result.isSuccess) {
-                                        // ✅ MUDANÇA: Agora vai para tela de login em vez de TelaPrincipal
                                         snackbarHostState.showSnackbar("Cadastro realizado! Faça login para continuar.")
-
-                                        // Aguarda um pouco para mostrar a mensagem antes de navegar
                                         kotlinx.coroutines.delay(1000)
-
                                         navController.navigate("TelaLogin") {
                                             popUpTo("Registro") { inclusive = true }
                                         }
