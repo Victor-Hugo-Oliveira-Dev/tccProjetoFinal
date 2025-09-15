@@ -1,2 +1,7 @@
-Bom dia, tarde ou noite, venho estudando alguns conceitos de mercado financeiro e percebi alguns tipos de ferramentas
-para auxiliar e quis juntar o util ao agradavél, quis criar um aplicativo que consegue
+TODO.me
+GRAFVAR, projeto de conclusão de curso.
+
+[ ] Alterar icon app.
+[ ] Corrigir Login com Google (erro, fazer configuração de dependências e implementação das configurações fireBase google-in-sing).
+[ ] Se caso der tempo, adicionar upload de datasets.
+
