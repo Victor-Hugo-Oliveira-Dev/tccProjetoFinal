@@ -37,10 +37,10 @@ class SimplifiedMLAnalyzer(private val context: Context) {
             loadDatasetFromAssets()
 
             isInitialized = true
-            android.util.Log.d("MLAnalyzer", "✅ ML Inicializado com ${datasetFeatures.size} referências")
+            android.util.Log.d("MLAnalyzer", "ML Inicializado com ${datasetFeatures.size} referências")
             true
         } catch (e: Exception) {
-            android.util.Log.e("MLAnalyzer", "❌ Erro na inicialização", e)
+            android.util.Log.e("MLAnalyzer", "Erro na inicialização", e)
             false
         }
     }
@@ -58,11 +58,11 @@ class SimplifiedMLAnalyzer(private val context: Context) {
             val features = extractFeatures(bitmap)
             val result = compareWithDataset(features)
 
-            android.util.Log.d("MLAnalyzer", "✅ Análise concluída: ${result.tendencia}")
+            android.util.Log.d("MLAnalyzer", "Análise concluída: ${result.tendencia}")
             result
 
         } catch (e: Exception) {
-            android.util.Log.e("MLAnalyzer", "❌ Erro na análise", e)
+            android.util.Log.e("MLAnalyzer", "Erro na análise", e)
             MLResult(success = false, error = e.message ?: "Erro desconhecido")
         }
     }
@@ -109,7 +109,7 @@ class SimplifiedMLAnalyzer(private val context: Context) {
     }
 
     private fun extractFeatures(bitmap: Bitmap): FloatArray {
-        // 🔒 Converte caso seja Config.HARDWARE
+        // Converte caso seja Config.HARDWARE
         val safeBitmap = if (bitmap.config == Bitmap.Config.HARDWARE) {
             bitmap.copy(Bitmap.Config.ARGB_8888, false)
         } else {
