@@ -37,10 +37,10 @@ class SimplifiedMLAnalyzer(private val context: Context) {
             loadDatasetFromAssets()
 
             isInitialized = true
-            android.util.Log.d("MLAnalyzer", "✅ ML Inicializado com ${datasetFeatures.size} referências")
+            android.util.Log.d("MLAnalyzer", "ML Inicializado com ${datasetFeatures.size} referências")
             true
         } catch (e: Exception) {
-            android.util.Log.e("MLAnalyzer", "❌ Erro na inicialização", e)
+            android.util.Log.e("MLAnalyzer", "Erro na inicialização", e)
             false
         }
     }
@@ -62,7 +62,7 @@ class SimplifiedMLAnalyzer(private val context: Context) {
             result
 
         } catch (e: Exception) {
-            android.util.Log.e("MLAnalyzer", "❌ Erro na análise", e)
+            android.util.Log.e("MLAnalyzer", "Erro na análise", e)
             MLResult(success = false, error = e.message ?: "Erro desconhecido")
         }
     }

@@ -173,11 +173,11 @@ fun TelaPrincipal(
                 showLoadingPopup = false
 
                 if (result.success) {
-                    Log.d("TelaPrincipal", "✅ Análise bem-sucedida: ${result.tendencia}")
+                    Log.d("TelaPrincipal", "Análise bem-sucedida: ${result.tendencia}")
                     analysisResult = result
                     showResultPopup = true
                 } else {
-                    Log.e("TelaPrincipal", "❌ Erro na análise: ${result.error}")
+                    Log.e("TelaPrincipal", "Erro na análise: ${result.error}")
                     errorMessage = result.error
                     showErrorPopup = true
                 }
@@ -186,7 +186,7 @@ fun TelaPrincipal(
                 showLoadingPopup = false
                 errorMessage = e.message ?: "Erro desconhecido durante a análise"
                 showErrorPopup = true
-                Log.e("TelaPrincipal", "❌ Erro na análise", e)
+                Log.e("TelaPrincipal", "Erro na análise", e)
             }
         }
     }
@@ -465,7 +465,6 @@ fun TelaPrincipal(
         }
     )
 
-    // ✅ Dialog de confirmação de logout
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },

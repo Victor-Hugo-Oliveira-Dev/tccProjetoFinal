@@ -24,7 +24,7 @@ class SimpleFirebaseService {
         return currentUser.uid
     }
 
-    // ✅ NOVO: Verifica se o usuário já está logado (login persistente)
+
     fun checkUserLoggedIn(): Boolean {
         val currentUser = auth.currentUser
         val isLoggedIn = currentUser != null
@@ -32,7 +32,7 @@ class SimpleFirebaseService {
         return isLoggedIn
     }
 
-    // ✅ NOVO: Login com Google
+
     suspend fun signInWithGoogle(account: GoogleSignInAccount): Result<Boolean> {
         return try {
             val credential = GoogleAuthProvider.getCredential(account.idToken, null)
@@ -55,14 +55,14 @@ class SimpleFirebaseService {
                     .set(userData)
                     .await()
 
-                Log.d("SimpleFirebase", "✅ Novo usuário Google registrado: ${user.email}")
+                Log.d("SimpleFirebase", "Novo usuário Google registrado: ${user.email}")
             } else {
-                Log.d("SimpleFirebase", "✅ Usuário Google existente logado: ${user.email}")
+                Log.d("SimpleFirebase", "Usuário Google existente logado: ${user.email}")
             }
 
             Result.success(true)
         } catch (e: Exception) {
-            Log.e("SimpleFirebase", "❌ Erro no login com Google", e)
+            Log.e("SimpleFirebase", "Erro no login com Google", e)
             Result.failure(e)
         }
     }
@@ -93,13 +93,12 @@ class SimpleFirebaseService {
                 .set(userData)
                 .await()
 
-            // ✅ IMPORTANTE: Faz logout após registrar para forçar login manual
             auth.signOut()
 
-            Log.d("SimpleFirebase", "✅ Usuário registrado (sem login automático): $email")
+            Log.d("SimpleFirebase", "Usuário registrado (sem login automático): $email")
             Result.success(true)
         } catch (e: Exception) {
-            Log.e("SimpleFirebase", "❌ Erro ao registrar usuário", e)
+            Log.e("SimpleFirebase", "Erro ao registrar usuário", e)
             Result.failure(e)
         }
     }
@@ -108,10 +107,10 @@ class SimpleFirebaseService {
     suspend fun loginUser(email: String, password: String): Result<Boolean> {
         return try {
             val authResult = auth.signInWithEmailAndPassword(email, password).await()
-            Log.d("SimpleFirebase", "✅ Usuário logado: ${authResult.user?.email}")
+            Log.d("SimpleFirebase", "Usuário logado: ${authResult.user?.email}")
             Result.success(true)
         } catch (e: Exception) {
-            Log.e("SimpleFirebase", "❌ Erro ao fazer login", e)
+            Log.e("SimpleFirebase", "Erro ao fazer login", e)
             Result.failure(e)
         }
     }
@@ -119,7 +118,7 @@ class SimpleFirebaseService {
     // Função para fazer logout
     fun logoutUser() {
         auth.signOut()
-        Log.d("SimpleFirebase", "✅ Usuário deslogado")
+        Log.d("SimpleFirebase", "Usuário deslogado")
     }
 
     // Verifica se usuário está logado
@@ -132,7 +131,6 @@ class SimpleFirebaseService {
         return auth.currentUser?.displayName ?: "Usuário"
     }
 
-    // ✅ NOVO: Obtém email do usuário logado
     fun getCurrentUserEmail(): String {
         return auth.currentUser?.email ?: ""
     }
@@ -158,10 +156,10 @@ class SimpleFirebaseService {
                 .add(historicoData)
                 .await()
 
-            Log.d("SimpleFirebase", "✅ Histórico salvo para usuário: $userId")
+            Log.d("SimpleFirebase", "Histórico salvo para usuário: $userId")
             Result.success(documentRef.id)
         } catch (e: Exception) {
-            Log.e("SimpleFirebase", "❌ Erro ao salvar histórico", e)
+            Log.e("SimpleFirebase", "Erro ao salvar histórico", e)
             Result.failure(e)
         }
     }
@@ -197,10 +195,10 @@ class SimpleFirebaseService {
                 it.data + it.hora
             }.take(50)
 
-            Log.d("SimpleFirebase", "✅ Históricos carregados para usuário $userId: ${sortedHistoricos.size}")
+            Log.d("SimpleFirebase", "Históricos carregados para usuário $userId: ${sortedHistoricos.size}")
             Result.success(sortedHistoricos)
         } catch (e: Exception) {
-            Log.e("SimpleFirebase", "❌ Erro ao carregar históricos", e)
+            Log.e("SimpleFirebase", "Erro ao carregar históricos", e)
             Result.failure(e)
         }
     }
@@ -223,13 +221,13 @@ class SimpleFirebaseService {
 
             if (documentToDelete != null) {
                 documentToDelete.reference.delete().await()
-                Log.d("SimpleFirebase", "✅ Histórico deletado do usuário: $userId")
+                Log.d("SimpleFirebase", "Histórico deletado do usuário: $userId")
                 Result.success(true)
             } else {
                 Result.failure(Exception("Histórico não encontrado"))
             }
         } catch (e: Exception) {
-            Log.e("SimpleFirebase", "❌ Erro ao deletar histórico", e)
+            Log.e("SimpleFirebase", "Erro ao deletar histórico", e)
             Result.failure(e)
         }
     }
@@ -250,10 +248,10 @@ class SimpleFirebaseService {
             }
 
             batch.commit().await()
-            Log.d("SimpleFirebase", "✅ Todos os dados do usuário $userId foram limpos")
+            Log.d("SimpleFirebase", "Todos os dados do usuário $userId foram limpos")
             Result.success(true)
         } catch (e: Exception) {
-            Log.e("SimpleFirebase", "❌ Erro ao limpar dados", e)
+            Log.e("SimpleFirebase", "Erro ao limpar dados", e)
             Result.failure(e)
         }
     }

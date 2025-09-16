@@ -27,7 +27,7 @@ fun AppFinal() {
     val navController = rememberNavController()
     val firebaseService = remember { SimpleFirebaseService() }
 
-    // ✅ Determina a tela inicial baseada no estado do login
+
     val startDestination = if (firebaseService.checkUserLoggedIn()) {
         "TelaPrincipal" // Usuário já logado, vai direto para a tela principal
     } else {

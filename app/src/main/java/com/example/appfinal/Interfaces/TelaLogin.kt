@@ -43,7 +43,7 @@ fun TelaLogin(navController: NavController, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val firebaseService = remember { SimpleFirebaseService() }
 
-    // ✅ Configuração do Google Sign-In
+
     val gso = remember {
         GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken("YOUR_WEB_CLIENT_ID_HERE") // ⚠️ SUBSTITUA pelo seu Web Client ID do Firebase
@@ -140,7 +140,6 @@ fun TelaLogin(navController: NavController, modifier: Modifier = Modifier) {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // ✅ Botão de Login por E-mail
                 Button(
                     onClick = {
                         if (email.isBlank() || senha.isBlank()) {
@@ -178,7 +177,6 @@ fun TelaLogin(navController: NavController, modifier: Modifier = Modifier) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // ✅ Botão de Login com Google
                 OutlinedButton(
                     onClick = {
                         if (!isLoading) {
