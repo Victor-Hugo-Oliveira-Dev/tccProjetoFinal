@@ -42,11 +42,11 @@ fun TelaLogin(navController: NavController, modifier: Modifier = Modifier) {
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val firebaseService = remember { SimpleFirebaseService() }
-
+    val webClientId = "814599502740-agdd8bmbudie37sgku479iksvpnhsuhe.apps.googleusercontent.com"
 
     val gso = remember {
         GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken("YOUR_WEB_CLIENT_ID_HERE") // ⚠️ SUBSTITUA pelo seu Web Client ID do Firebase
+            .requestIdToken(webClientId)
             .requestEmail()
             .build()
     }
@@ -57,26 +57,52 @@ fun TelaLogin(navController: NavController, modifier: Modifier = Modifier) {
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        try {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-            val account = task.getResult(ApiException::class.java)
-
-            coroutineScope.launch {
+        coroutineScope.launch {
+            try {
                 isLoading = true
-                val loginResult = firebaseService.signInWithGoogle(account)
-                if (loginResult.isSuccess) {
-                    navController.navigate("TelaPrincipal") {
-                        popUpTo("TelaLogin") { inclusive = true }
+                val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+                val account = task.getResult(ApiException::class.java)
+
+                Log.d("GoogleSignIn", "Conta obtida: ${account.email}")
+
+                if (account.idToken != null) {
+                    val loginResult = firebaseService.signInWithGoogle(account)
+                    if (loginResult.isSuccess) {
+                        Log.d("GoogleSignIn", "Login com Google bem-sucedido")
+                        navController.navigate("TelaPrincipal") {
+                            popUpTo("TelaLogin") { inclusive = true }
+                        }
+                    } else {
+                        val error = loginResult.exceptionOrNull()?.message ?: "Erro desconhecido"
+                        Log.e("GoogleSignIn", "Erro no login: $error")
+                        snackbarHostState.showSnackbar("Erro no login com Google: $error")
                     }
                 } else {
-                    snackbarHostState.showSnackbar("Erro no login com Google: ${loginResult.exceptionOrNull()?.message}")
+                    Log.e("GoogleSignIn", "Token ID é nulo")
+                    snackbarHostState.showSnackbar("Erro: Token de autenticação não encontrado")
                 }
+            } catch (e: ApiException) {
+                Log.e("GoogleSignIn", "Erro no Google Sign-In: ${e.statusCode} - ${e.message}", e)
+                when (e.statusCode) {
+                    12501 -> snackbarHostState.showSnackbar("Login cancelado pelo usuário")
+                    12502 -> snackbarHostState.showSnackbar("Erro de rede. Verifique sua conexão")
+                    else -> snackbarHostState.showSnackbar("Erro no login com Google: ${e.message}")
+                }
+            } catch (e: Exception) {
+                Log.e("GoogleSignIn", "Erro inesperado", e)
+                snackbarHostState.showSnackbar("Erro inesperado no login")
+            } finally {
                 isLoading = false
             }
-        } catch (e: ApiException) {
-            Log.e("GoogleSignIn", "Erro no Google Sign-In", e)
-            coroutineScope.launch {
-                snackbarHostState.showSnackbar("Erro no login com Google")
+        }
+    }
+
+    // Verificar se o usuário já está logado ao inicializar a tela
+    LaunchedEffect(Unit) {
+        if (firebaseService.checkUserLoggedIn()) {
+            Log.d("TelaLogin", "Usuário já está logado, redirecionando...")
+            navController.navigate("TelaPrincipal") {
+                popUpTo("TelaLogin") { inclusive = true }
             }
         }
     }
@@ -97,6 +123,12 @@ fun TelaLogin(navController: NavController, modifier: Modifier = Modifier) {
                 if (isLoading) {
                     CircularProgressIndicator(color = Color(0xff1b2e3a))
                     Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Realizando login...",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
 
                 Image(
@@ -110,7 +142,8 @@ fun TelaLogin(navController: NavController, modifier: Modifier = Modifier) {
                     value = email,
                     onValueChange = { email = it },
                     label = "E-mail",
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -122,13 +155,17 @@ fun TelaLogin(navController: NavController, modifier: Modifier = Modifier) {
                     label = "Senha",
                     keyboardType = KeyboardType.Password,
                     visualTransformation = if (mostrarSenha) VisualTransformation.None else PasswordVisualTransformation(),
+                    enabled = !isLoading,
                     trailingIcon = {
                         val iconRes = if (mostrarSenha) {
                             R.drawable.baseline_remove_red_eye_24
                         } else {
                             R.drawable.baseline_visibility_off_24
                         }
-                        IconButton(onClick = { mostrarSenha = !mostrarSenha }) {
+                        IconButton(
+                            onClick = { mostrarSenha = !mostrarSenha },
+                            enabled = !isLoading
+                        ) {
                             Icon(
                                 painter = painterResource(id = iconRes),
                                 contentDescription = "Alternar Visibilidade da Senha",
@@ -147,15 +184,16 @@ fun TelaLogin(navController: NavController, modifier: Modifier = Modifier) {
                                 snackbarHostState.showSnackbar("Preencha todos os campos.")
                             }
                         } else {
-                            isLoading = true
                             coroutineScope.launch {
+                                isLoading = true
                                 val result = firebaseService.loginUser(email, senha)
                                 if (result.isSuccess) {
                                     navController.navigate("TelaPrincipal") {
                                         popUpTo("TelaLogin") { inclusive = true }
                                     }
                                 } else {
-                                    snackbarHostState.showSnackbar("Erro: ${result.exceptionOrNull()?.message}")
+                                    val error = result.exceptionOrNull()?.message ?: "Erro desconhecido"
+                                    snackbarHostState.showSnackbar("Erro: $error")
                                 }
                                 isLoading = false
                             }
@@ -169,7 +207,8 @@ fun TelaLogin(navController: NavController, modifier: Modifier = Modifier) {
                     shape = RoundedCornerShape(8.dp),
                     enabled = !isLoading
                 ) {
-                    Text(if (isLoading) "Entrando..." else "Entrar",
+                    Text(
+                        text = if (isLoading) "Entrando..." else "Entrar",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -180,8 +219,18 @@ fun TelaLogin(navController: NavController, modifier: Modifier = Modifier) {
                 OutlinedButton(
                     onClick = {
                         if (!isLoading) {
-                            val signInIntent = googleSignInClient.signInIntent
-                            googleSignInLauncher.launch(signInIntent)
+                            coroutineScope.launch {
+                                try {
+                                    // Fazer sign out antes de tentar novo login para evitar conflitos
+                                    googleSignInClient.signOut()
+                                    Log.d("GoogleSignIn", "Iniciando Google Sign-In")
+                                    val signInIntent = googleSignInClient.signInIntent
+                                    googleSignInLauncher.launch(signInIntent)
+                                } catch (e: Exception) {
+                                    Log.e("GoogleSignIn", "Erro ao iniciar intent", e)
+                                    snackbarHostState.showSnackbar("Erro ao iniciar login com Google")
+                                }
+                            }
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -197,7 +246,7 @@ fun TelaLogin(navController: NavController, modifier: Modifier = Modifier) {
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Entrar com Google",
+                            text = if (isLoading) "Entrando..." else "Entrar com Google",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -225,7 +274,7 @@ fun TelaLogin(navController: NavController, modifier: Modifier = Modifier) {
                 Text(
                     text = "Cadastrar",
                     color = Color.Black,
-                    modifier = Modifier.clickable {
+                    modifier = Modifier.clickable(enabled = !isLoading) {
                         navController.navigate("Registro")
                     },
                     textDecoration = TextDecoration.Underline

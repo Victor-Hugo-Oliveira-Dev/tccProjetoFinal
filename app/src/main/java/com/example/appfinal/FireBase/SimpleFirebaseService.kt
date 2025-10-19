@@ -24,23 +24,44 @@ class SimpleFirebaseService {
         return currentUser.uid
     }
 
-
     fun checkUserLoggedIn(): Boolean {
         val currentUser = auth.currentUser
         val isLoggedIn = currentUser != null
         Log.d("SimpleFirebase", "✅ Verificação de login: $isLoggedIn")
+        if (isLoggedIn) {
+            Log.d("SimpleFirebase", "Usuário atual: ${currentUser?.email}")
+        }
         return isLoggedIn
     }
 
-
     suspend fun signInWithGoogle(account: GoogleSignInAccount): Result<Boolean> {
         return try {
-            val credential = GoogleAuthProvider.getCredential(account.idToken, null)
+            Log.d("SimpleFirebase", "Iniciando login com Google para: ${account.email}")
+
+            // Verificar se o token ID está presente
+            val idToken = account.idToken
+            if (idToken == null) {
+                Log.e("SimpleFirebase", "Token ID é nulo")
+                return Result.failure(Exception("Token de autenticação não encontrado"))
+            }
+
+            Log.d("SimpleFirebase", "Token ID obtido, criando credential")
+            val credential = GoogleAuthProvider.getCredential(idToken, null)
+
+            Log.d("SimpleFirebase", "Fazendo login com credential")
             val authResult = auth.signInWithCredential(credential).await()
 
+            val user = authResult.user
+            if (user == null) {
+                Log.e("SimpleFirebase", "Usuário é nulo após autenticação")
+                return Result.failure(Exception("Falha na autenticação"))
+            }
+
+            Log.d("SimpleFirebase", "Usuário autenticado: ${user.email}")
+
             // Verifica se é um novo usuário e cria documento no Firestore
-            val user = authResult.user!!
             val isNewUser = authResult.additionalUserInfo?.isNewUser ?: false
+            Log.d("SimpleFirebase", "É novo usuário: $isNewUser")
 
             if (isNewUser) {
                 val userData = mapOf(
@@ -50,6 +71,7 @@ class SimpleFirebaseService {
                     "createdAt" to System.currentTimeMillis()
                 )
 
+                Log.d("SimpleFirebase", "Criando documento no Firestore para novo usuário")
                 firestore.collection("users")
                     .document(user.uid)
                     .set(userData)
@@ -58,18 +80,47 @@ class SimpleFirebaseService {
                 Log.d("SimpleFirebase", "Novo usuário Google registrado: ${user.email}")
             } else {
                 Log.d("SimpleFirebase", "Usuário Google existente logado: ${user.email}")
+
+                // Verificar se o documento existe no Firestore, se não, criar
+                try {
+                    val userDoc = firestore.collection("users")
+                        .document(user.uid)
+                        .get()
+                        .await()
+
+                    if (!userDoc.exists()) {
+                        Log.d("SimpleFirebase", "Documento do usuário não existe, criando...")
+                        val userData = mapOf(
+                            "username" to (user.displayName ?: "Usuário Google"),
+                            "email" to (user.email ?: ""),
+                            "provider" to "google",
+                            "createdAt" to System.currentTimeMillis()
+                        )
+
+                        firestore.collection("users")
+                            .document(user.uid)
+                            .set(userData)
+                            .await()
+                    }
+                } catch (e: Exception) {
+                    Log.e("SimpleFirebase", "Erro ao verificar/criar documento do usuário", e)
+                    // Não falhar o login por causa disso
+                }
             }
 
+            Log.d("SimpleFirebase", "Login com Google concluído com sucesso")
             Result.success(true)
         } catch (e: Exception) {
-            Log.e("SimpleFirebase", "Erro no login com Google", e)
+            Log.e("SimpleFirebase", "Erro no login com Google: ${e.message}", e)
             Result.failure(e)
         }
     }
 
-    // Função para registrar novo usuário - MODIFICADA para NÃO fazer login automático
+    // Função para registrar novo usuário - NÃO faz login automático
     suspend fun registerUser(email: String, password: String, username: String): Result<Boolean> {
         return try {
+            Log.d("SimpleFirebase", "Registrando novo usuário: $email")
+
             // Cria o usuário no Authentication
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
 
@@ -93,12 +144,13 @@ class SimpleFirebaseService {
                 .set(userData)
                 .await()
 
+            // Fazer logout após registro para que o usuário precise fazer login manualmente
             auth.signOut()
 
             Log.d("SimpleFirebase", "Usuário registrado (sem login automático): $email")
             Result.success(true)
         } catch (e: Exception) {
-            Log.e("SimpleFirebase", "Erro ao registrar usuário", e)
+            Log.e("SimpleFirebase", "Erro ao registrar usuário: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -106,19 +158,24 @@ class SimpleFirebaseService {
     // Função para fazer login
     suspend fun loginUser(email: String, password: String): Result<Boolean> {
         return try {
+            Log.d("SimpleFirebase", "Fazendo login: $email")
             val authResult = auth.signInWithEmailAndPassword(email, password).await()
             Log.d("SimpleFirebase", "Usuário logado: ${authResult.user?.email}")
             Result.success(true)
         } catch (e: Exception) {
-            Log.e("SimpleFirebase", "Erro ao fazer login", e)
+            Log.e("SimpleFirebase", "Erro ao fazer login: ${e.message}", e)
             Result.failure(e)
         }
     }
 
     // Função para fazer logout
     fun logoutUser() {
-        auth.signOut()
-        Log.d("SimpleFirebase", "Usuário deslogado")
+        try {
+            auth.signOut()
+            Log.d("SimpleFirebase", "Usuário deslogado com sucesso")
+        } catch (e: Exception) {
+            Log.e("SimpleFirebase", "Erro ao fazer logout", e)
+        }
     }
 
     // Verifica se usuário está logado

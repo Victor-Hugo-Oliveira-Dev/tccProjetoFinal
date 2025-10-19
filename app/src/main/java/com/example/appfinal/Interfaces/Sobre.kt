@@ -120,18 +120,67 @@ fun Sobre(navController: NavController) {
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Sobre o Projeto",
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            text = "Versão",
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xff1b2e3a)
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "O presente trabalho tem como objetivo desenvolver uma solução voltada ao apoio de traders e investidores em suas atividades diárias. \n\n" +
-                                    "Considerando o elevado volume de informações envolvidas nesse contexto, o sistema proposto integra-se a ferramentas complementares com a finalidade de aumentar a taxa de operações bem-sucedidas. Para tanto, realiza o cálculo da probabilidade de ganho (gain) ou perda (loss) a partir da análise dos padrões identificados nos dez últimos candlesticks de um gráfico.\n\n" +
-                                    "Este projeto foi elaborado como requisito parcial para a conclusão do curso de Análise e Desenvolvimento de Sistemas, utilizando o ambiente de desenvolvimento Android Studio e linguagens de programação como Kotlin e Python.\n\n" +
-                                    "Para melhor análise, sempre escolha tirar fotos dos 10 ultimos CandleSticks.",
+                            text = "Beta, 1.0",
+                            fontSize = 16.sp,
+                            color = Color.DarkGray
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFE0E0E0)
+                    ),
+                    elevation = CardDefaults.cardElevation(8.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Créditos",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xff1b2e3a)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Desenvolvedor: Victor Hugo Oliveira",
+                            fontSize = 16.sp,
+                            color = Color.DarkGray
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFE0E0E0)
+                    ),
+                    elevation = CardDefaults.cardElevation(8.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Informações",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xff1b2e3a)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Tire foto somente dos 10 ultimos CandleSticks.\n"+
+                            "Considere somente a partir de 90% de similaridade.\n"+
+                            "Este aplicativo é uma ferramenta estritamente auxiliar.\n"+
+                            "Não nos responsabilizamos por quaisquer perdas monetárias.",
                             fontSize = 16.sp,
                             color = Color.DarkGray
                         )
