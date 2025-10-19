@@ -1,0 +1,6 @@
+TODO.me
+GRAFVAR, projeto de conclusão de curso.
+
+[x] Alterar icon app.
+[ ] Corrigir Login com Google (erro, fazer configuração de dependências e implementação das configurações fireBase google-in-sing).
+[ ] Se caso der tempo, adicionar upload de datasets.

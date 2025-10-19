@@ -58,7 +58,7 @@ class SimplifiedMLAnalyzer(private val context: Context) {
             val features = extractFeatures(bitmap)
             val result = compareWithDataset(features)
 
-            android.util.Log.d("MLAnalyzer", "✅ Análise concluída: ${result.tendencia}")
+            android.util.Log.d("MLAnalyzer", "Análise concluída: ${result.tendencia}")
             result
 
         } catch (e: Exception) {
@@ -109,7 +109,7 @@ class SimplifiedMLAnalyzer(private val context: Context) {
     }
 
     private fun extractFeatures(bitmap: Bitmap): FloatArray {
-        // 🔒 Converte caso seja Config.HARDWARE
+        // Converte caso seja Config.HARDWARE
         val safeBitmap = if (bitmap.config == Bitmap.Config.HARDWARE) {
             bitmap.copy(Bitmap.Config.ARGB_8888, false)
         } else {
